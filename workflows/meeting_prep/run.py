@@ -1,0 +1,160 @@
+"""
+WORKFLOW: Meeting Prep
+----------------------
+INPUT:   Person name + company + meeting context + optional goal
+CONTEXT: Existing company brief (if researched before) + investment thesis
+PROCESS: Claude builds a structured briefing doc — background, agenda, 5 smart questions, watch-fors
+OUTPUT:  Saved to knowledge_base/meetings/
+
+This is the highest-value daily workflow for an active investor or adviser.
+"""
+
+import sys
+from datetime import datetime
+from pathlib import Path
+from pydantic import BaseModel
+
+sys.path.append(str(Path(__file__).parent.parent.parent))
+from core.engine import call_claude_structured, load_context, save_output, KB
+
+
+# ── Pydantic schema ────────────────────────────────────────────────────────────
+
+class PersonBackground(BaseModel):
+    name: str
+    role: str
+    company: str
+    background_summary: str      # 2-3 sentences — who they are, what they've built
+    notable_facts: list[str]     # 3-5 bullets: past companies, achievements, public info
+
+
+class MeetingPrepOutput(BaseModel):
+    person_name: str
+    company: str
+    background: PersonBackground
+    likely_agenda: list[str]     # what they will probably want to discuss (3-5 items)
+    smart_questions: list[str]   # exactly 5 questions worth asking
+    watch_fors: list[str]        # red flags or things to stay alert to (2-4 items)
+    thesis_relevance: str        # "Strong" | "Partial" | "Weak" | "Not applicable"
+    thesis_relevance_reason: str # one sentence
+    recommended_outcome: str     # one clear sentence: what to leave the meeting having agreed
+    confidence_note: str         # what data was missing or uncertain
+
+
+# ── Main workflow ──────────────────────────────────────────────────────────────
+
+def meeting_prep(
+    person_name: str,
+    company: str,
+    meeting_context: str,
+    meeting_date: str = "",
+    your_goal: str = "",
+) -> dict:
+    """
+    Build a meeting prep briefing doc.
+    Returns dict with all prep fields + full_brief (markdown) + file_path.
+    """
+
+    # STEP 1: CONTEXT — check for existing company brief
+    safe_co        = company.lower().replace(" ", "_").replace("/", "-")
+    existing_brief = load_context("companies", f"{safe_co}.md")
+
+    if not existing_brief:
+        companies_dir = KB / "companies"
+        if companies_dir.exists():
+            matches = sorted(
+                companies_dir.glob(f"{safe_co}_*.md"),
+                key=lambda f: f.stat().st_mtime,
+                reverse=True,
+            )
+            if matches:
+                existing_brief = matches[0].read_text(encoding="utf-8")
+
+    thesis = load_context("thesis")
+
+    # STEP 2: INPUT
+    context_block = f"""Meeting context: {meeting_context}
+{f"Your goal: {your_goal}" if your_goal else ""}
+{f"Meeting date: {meeting_date}" if meeting_date else ""}
+
+Existing research on {company}:
+{existing_brief if existing_brief else "No prior research on file."}
+
+Investment thesis:
+{thesis if thesis else "Not configured — score thesis relevance as Not applicable."}"""
+
+    # STEP 3: PROCESS
+    system = """You are a meeting preparation assistant for a VC investor and adviser.
+Build a concise, actionable briefing document.
+
+Rules:
+- background_summary must be specific and factual — not generic platitudes
+- smart_questions must be genuinely insightful — not softballs, not gotchas
+- watch_fors are things the investor should stay alert to: inconsistencies, evasions, red flags
+- If you lack reliable information, say so in confidence_note rather than inventing facts
+- Never fabricate specific facts (funding rounds, revenue, team names) — use "not confirmed" instead
+- recommended_outcome is one clear sentence: what should be agreed by end of meeting
+- thesis_relevance must be exactly one of: Strong, Partial, Weak, Not applicable"""
+
+    user = f"""Prepare a meeting brief for: {person_name} at {company}
+
+{context_block}
+
+Return structured JSON now."""
+
+    prep = call_claude_structured(system, user, schema=MeetingPrepOutput, max_tokens=2000)
+
+    # STEP 4: OUTPUT — render to markdown and save
+    date_str    = meeting_date or datetime.now().strftime("%d %B %Y")
+    prepared_at = datetime.now().strftime("%d %B %Y, %H:%M")
+
+    notable_md   = "".join(f"- {f}\n" for f in prep.background.notable_facts)
+    agenda_md    = "".join(f"- {a}\n" for a in prep.likely_agenda)
+    questions_md = "".join(f"{i+1}. {q}\n" for i, q in enumerate(prep.smart_questions))
+    watchfor_md  = "".join(f"- {w}\n" for w in prep.watch_fors)
+
+    md = f"""# Meeting Prep — {prep.person_name} ({prep.company})
+**Meeting date:** {date_str}
+**Prepared:** {prepared_at}
+
+---
+
+## Who They Are
+**{prep.background.role} at {prep.background.company}**
+
+{prep.background.background_summary}
+
+{notable_md}
+## Likely Agenda
+{agenda_md}
+## 5 Smart Questions to Ask
+{questions_md}
+## Watch For
+{watchfor_md}
+## Thesis Relevance — {prep.thesis_relevance}
+{prep.thesis_relevance_reason}
+
+## Recommended Outcome
+{prep.recommended_outcome}
+
+---
+*Note: {prep.confidence_note}*
+*Generated by AI-OS · {prepared_at}*"""
+
+    safe_person = person_name.lower().replace(" ", "_")
+    timestamp   = datetime.now().strftime("%Y%m%d_%H%M")
+    filename    = f"meetingprep_{safe_person}_{timestamp}.md"
+    file_path   = save_output(md, "meetings", filename)
+
+    return {
+        "person_name":         prep.person_name,
+        "company":             prep.company,
+        "background_summary":  prep.background.background_summary,
+        "smart_questions":     prep.smart_questions,
+        "watch_fors":          prep.watch_fors,
+        "thesis_relevance":    prep.thesis_relevance,
+        "recommended_outcome": prep.recommended_outcome,
+        "confidence_note":     prep.confidence_note,
+        "full_brief":          md,
+        "file_path":           str(file_path),
+    }

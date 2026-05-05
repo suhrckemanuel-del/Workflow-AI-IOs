@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base surfaces — warm dark, amber-tinted */
+    --background: 240 6% 7%;          /* #111113 */
+    --foreground: 42 15% 93%;         /* #F2EFE8 warm off-white */
+
+    --card: 240 5% 9%;                /* #141418 surface */
+    --card-foreground: 42 15% 93%;
+    --popover: 228 8% 11%;            /* #1B1C20 surface-raised */
+    --popover-foreground: 42 15% 93%;
+
+    --primary: 40 33% 58%;            /* #BCA06A amber */
+    --primary-foreground: 240 6% 7%;  /* dark text on amber buttons */
+
+    --secondary: 228 8% 11%;          /* #1B1C20 surface-raised */
+    --secondary-foreground: 42 15% 93%;
+
+    --muted: 228 8% 11%;
+    --muted-foreground: 34 6% 63%;    /* #A8A29A warm grey */
+
+    --accent: 40 33% 58%;             /* #BCA06A amber */
+    --accent-foreground: 240 6% 7%;
+
+    --destructive: 0 38% 50%;         /* #b05050 */
+    --destructive-foreground: 42 15% 93%;
+
+    --border: 240 6% 18%;             /* #2A2A30 */
+    --input: 240 6% 18%;
+    --ring: 40 33% 58%;               /* amber focus ring */
+    --radius: 0.5rem;
+
+    /* Extended semantic tokens */
+    --success: 125 21% 58%;           /* #7BAE7F sage green */
+    --warning: 36 55% 51%;            /* #C8903D amber warning */
+    --selected-bg: #EEE8DC;           /* warm parchment — selected table rows */
+    --selected-text: #1a1814;
+
+    /* Bar heights — used in layout spacing */
+    --top-bar-h: 30px;
+    --bot-bar-h: 26px;
+    --sidebar-w: 240px;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-color: #111113;
+    color: #F2EFE8;
+  }
+}

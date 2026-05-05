@@ -1,0 +1,58 @@
+{
+  "id": "email_drafting",
+  "name": "Email Drafting",
+  "icon": "✉️",
+  "description": "Tell it who you're writing to and why. Get a draft in your voice, ready to copy-paste.",
+  "order": 2,
+  "entry_function": "draft_email",
+  "entry_module": "workflows.email_drafting.run",
+  "inputs": [
+    {
+      "key": "recipient_name",
+      "label": "Recipient name",
+      "type": "text",
+      "placeholder": "e.g. Sarah Chen",
+      "required": true
+    },
+    {
+      "key": "recipient_company",
+      "label": "Their company",
+      "type": "text",
+      "placeholder": "e.g. Acme FinTech",
+      "required": false
+    },
+    {
+      "key": "email_type",
+      "label": "Email type",
+      "type": "select",
+      "choices": ["intro_outreach", "follow_up", "meeting_request", "deck_request", "investor_update", "custom"],
+      "required": true
+    },
+    {
+      "key": "sender_name",
+      "label": "Your name",
+      "type": "text",
+      "placeholder": "e.g. Alex",
+      "required": true
+    },
+    {
+      "key": "context",
+      "label": "Context",
+      "type": "textarea",
+      "placeholder": "e.g. Met at Slush last week. They are raising a Series A. I want to follow up and see their deck.",
+      "required": true
+    },
+    {
+      "key": "key_points",
+      "label": "Key points to cover (one per line)",
+      "type": "multiline",
+      "placeholder": "Ask for their deck\nMention our FinTech focus\nPropose a 30 min call",
+      "required": false
+    }
+  ],
+  "output_fields": ["subject", "body", "file_path"],
+  "primary_display_field": "body",
+  "stats_label": "",
+  "requires_exa": false,
+  "demo_available": true
+}

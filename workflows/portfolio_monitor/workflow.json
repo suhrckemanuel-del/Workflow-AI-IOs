@@ -1,0 +1,23 @@
+{
+  "id": "portfolio_monitor",
+  "name": "Portfolio Monitor",
+  "icon": "📊",
+  "description": "Weekly digest of what's happening across your portfolio. Flags what needs your attention.",
+  "order": 3,
+  "entry_function": "portfolio_digest",
+  "entry_module": "workflows.portfolio_monitor.run",
+  "inputs": [
+    {
+      "key": "companies",
+      "label": "Companies to monitor (one per line, or leave empty to scan knowledge base)",
+      "type": "multiline",
+      "placeholder": "Stripe\nRevolut\nMonzo",
+      "required": false
+    }
+  ],
+  "output_fields": ["digest", "companies_monitored", "file_path"],
+  "primary_display_field": "digest",
+  "stats_label": "{companies_monitored} companies monitored",
+  "requires_exa": true,
+  "demo_available": true
+}

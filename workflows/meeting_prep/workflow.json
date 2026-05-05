@@ -1,0 +1,51 @@
+{
+  "id": "meeting_prep",
+  "name": "Meeting Prep",
+  "icon": "📋",
+  "description": "Tell it who you're meeting and why. Get background, smart questions, watch-fors and a recommended outcome.",
+  "order": 4,
+  "entry_function": "meeting_prep",
+  "entry_module": "workflows.meeting_prep.run",
+  "inputs": [
+    {
+      "key": "person_name",
+      "label": "Person's name",
+      "type": "text",
+      "placeholder": "e.g. Sarah Chen",
+      "required": true
+    },
+    {
+      "key": "company",
+      "label": "Their company",
+      "type": "text",
+      "placeholder": "e.g. Monzo, Revolut",
+      "required": true
+    },
+    {
+      "key": "meeting_context",
+      "label": "What is this meeting about?",
+      "type": "textarea",
+      "placeholder": "e.g. First call — reached out via LinkedIn. Raising Series A. FinTech infrastructure for SMEs.",
+      "required": true
+    },
+    {
+      "key": "meeting_date",
+      "label": "Meeting date (optional)",
+      "type": "text",
+      "placeholder": "e.g. 25 April 2026",
+      "required": false
+    },
+    {
+      "key": "your_goal",
+      "label": "Your goal for this meeting (optional)",
+      "type": "text",
+      "placeholder": "e.g. Decide whether to request their deck",
+      "required": false
+    }
+  ],
+  "output_fields": ["full_brief", "smart_questions", "recommended_outcome", "file_path"],
+  "primary_display_field": "full_brief",
+  "stats_label": "",
+  "requires_exa": false,
+  "demo_available": true
+}

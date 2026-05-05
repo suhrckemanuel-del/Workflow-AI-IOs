@@ -1,0 +1,30 @@
+{
+  "id": "company_research",
+  "name": "Company Research",
+  "icon": "🔍",
+  "description": "Drop a company name. Get a structured brief with live signals, red flags and thesis fit in 30 seconds.",
+  "order": 1,
+  "entry_function": "company_research",
+  "entry_module": "workflows.company_research.run",
+  "inputs": [
+    {
+      "key": "company_name",
+      "label": "Company name",
+      "type": "text",
+      "placeholder": "e.g. Stripe, Waymo, Monzo",
+      "required": true
+    },
+    {
+      "key": "sector",
+      "label": "Sector (optional)",
+      "type": "text",
+      "placeholder": "e.g. FinTech, DeepTech",
+      "required": false
+    }
+  ],
+  "output_fields": ["brief", "signals_found", "sources", "file_path"],
+  "primary_display_field": "brief",
+  "stats_label": "{signals_found} live signals found",
+  "requires_exa": true,
+  "demo_available": true
+}

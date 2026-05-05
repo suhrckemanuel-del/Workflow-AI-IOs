@@ -1,0 +1,65 @@
+{
+  "id": "vc_outreach_drafts",
+  "name": "VC Outreach Drafts",
+  "icon": "mail",
+  "description": "Turn reviewed lead rows into Claude-written email and LinkedIn drafts. Two independent channels per lead: email first touch + 5-day follow-up, and LinkedIn connect + DM. No sending.",
+  "order": 6,
+  "entry_function": "vc_outreach_drafts",
+  "entry_module": "workflows.vc_outreach_drafts.run",
+  "inputs": [
+    {
+      "key": "lead_data",
+      "label": "Lead data",
+      "type": "textarea",
+      "placeholder": "Paste rows from the VC Lead Finder CSV, including the header row.",
+      "required": true
+    },
+    {
+      "key": "campaign_context",
+      "label": "Campaign context",
+      "type": "textarea",
+      "placeholder": "What is this campaign about? Who are you reaching out to and why should they care?",
+      "required": true
+    },
+    {
+      "key": "sender_name",
+      "label": "Sender name",
+      "type": "text",
+      "placeholder": "e.g. Manuel",
+      "required": true
+    },
+    {
+      "key": "sender_context",
+      "label": "Sender context",
+      "type": "textarea",
+      "placeholder": "Who are you and why are you reaching out? 2-3 sentences. Claude will use this to frame the tone and credibility.",
+      "required": true
+    },
+    {
+      "key": "outreach_goal",
+      "label": "Outreach goal",
+      "type": "textarea",
+      "placeholder": "What do you want from each recipient? Be specific about what a successful reply looks like.",
+      "required": true
+    },
+    {
+      "key": "call_to_action",
+      "label": "Call to action",
+      "type": "text",
+      "placeholder": "e.g. Would you be open to a 20-minute call to compare notes?",
+      "required": true
+    },
+    {
+      "key": "max_drafts",
+      "label": "Max drafts",
+      "type": "select",
+      "choices": ["1", "2", "3", "4", "5"],
+      "required": true
+    }
+  ],
+  "output_fields": ["brief", "drafts", "review_queue_csv_path", "file_path", "ready_count", "needs_review_count", "blocked_count"],
+  "primary_display_field": "brief",
+  "stats_label": "{ready_count} ready, {needs_review_count} need review",
+  "requires_exa": false,
+  "demo_available": false
+}

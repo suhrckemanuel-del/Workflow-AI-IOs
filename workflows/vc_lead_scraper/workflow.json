@@ -1,0 +1,58 @@
+{
+  "id": "vc_lead_scraper",
+  "name": "VC Lead Finder",
+  "icon": "search",
+  "description": "Find and rank relevant VC funds for benchmarking or outreach. Outputs a CSV-ready lead table with contact routes.",
+  "order": 5,
+  "entry_function": "vc_lead_scraper",
+  "entry_module": "workflows.vc_lead_scraper.run",
+  "inputs": [
+    {
+      "key": "project_context",
+      "label": "Project context",
+      "type": "textarea",
+      "placeholder": "What is the outreach for? Include client, project, reason for contacting VCs, and desired angle.",
+      "required": true
+    },
+    {
+      "key": "target_profile",
+      "label": "Target VC profile",
+      "type": "textarea",
+      "placeholder": "e.g. European early-stage VC funds, student-run VCs, seed funds with portfolio analytics or fund benchmarking experience.",
+      "required": true
+    },
+    {
+      "key": "geography",
+      "label": "Geography",
+      "type": "text",
+      "placeholder": "e.g. Europe, Netherlands, UK, DACH, Nordics",
+      "required": false
+    },
+    {
+      "key": "lead_count",
+      "label": "Lead count",
+      "type": "select",
+      "choices": ["10", "20", "30"],
+      "required": true
+    },
+    {
+      "key": "must_include",
+      "label": "Must include / filters",
+      "type": "multiline",
+      "placeholder": "student-run VC\nportfolio benchmarking\nearly-stage fund\npublic contact email",
+      "required": false
+    },
+    {
+      "key": "exclude",
+      "label": "Exclude",
+      "type": "multiline",
+      "placeholder": "corporate VC\nUS-only funds\naccelerators",
+      "required": false
+    }
+  ],
+  "output_fields": ["brief", "csv", "leads_found", "sources", "file_path", "csv_file_path"],
+  "primary_display_field": "brief",
+  "stats_label": "{leads_found} VC leads found",
+  "requires_exa": true,
+  "demo_available": false
+}
