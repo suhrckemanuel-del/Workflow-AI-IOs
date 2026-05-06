@@ -6,6 +6,8 @@ data/*.db
 data/aios.db
 data/*.db-shm
 data/*.db-wal
+data/credentials.json
+data/google_token.json
 
 knowledge_base/
 clients/*/knowledge_base/
