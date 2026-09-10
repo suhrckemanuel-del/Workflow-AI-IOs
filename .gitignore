@@ -4,6 +4,8 @@
 
 data/*.db
 data/aios.db
+# Course library: your own copyrighted lecture material stays off a public repo.
+data/rag/
 data/*.db-shm
 data/*.db-wal
 data/credentials.json

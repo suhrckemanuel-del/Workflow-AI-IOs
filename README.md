@@ -18,6 +18,18 @@ get real outputs.
 - Storage: SQLite + Obsidian-native markdown KB
 - AI: Claude (Anthropic) + Exa (web search)
 
+## Course Library (RAG)
+Study material — lecture slides, problem sets, notes — indexed for
+question answering with citations back to the page or slide.
+
+```bash
+python -m rag add ~/Downloads/Lecture_3.pdf --course "Applied Micro"
+python -m rag ask "Why does a Pigouvian tax equal marginal external damage?"
+python -m rag quiz "externalities" --week 2
+```
+
+See [RAG_COURSE_LIBRARY.md](RAG_COURSE_LIBRARY.md).
+
 ## Workflows
 - Company Research — structured brief with live signals
 - Email Drafting — outreach in your voice

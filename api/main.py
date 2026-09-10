@@ -8,7 +8,7 @@ load_dotenv()
 
 from core.db import init_db
 from core.registry import discover_workflows
-from api.routes import workflows, history, knowledge_base, architect, settings, clients, automation_projects, agents, files
+from api.routes import workflows, history, knowledge_base, architect, settings, clients, automation_projects, agents, files, rag
 from api.scheduler import start_scheduler, stop_scheduler
 
 
@@ -45,3 +45,4 @@ app.include_router(clients.router, prefix="/api")
 app.include_router(automation_projects.router, prefix="/api")
 app.include_router(agents.router, prefix="/api")
 app.include_router(files.router, prefix="/api")
+app.include_router(rag.router, prefix="/api")
