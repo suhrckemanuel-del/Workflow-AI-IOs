@@ -26,6 +26,7 @@ question answering with citations back to the page or slide.
 python -m rag add ~/Downloads/Lecture_3.pdf --course "Applied Micro"
 python -m rag ask "Why does a Pigouvian tax equal marginal external damage?"
 python -m rag quiz "externalities" --week 2
+python -m rag add ~/Downloads/Lecture_3.vtt   # lecture recording captions
 ```
 
 See [RAG_COURSE_LIBRARY.md](RAG_COURSE_LIBRARY.md).

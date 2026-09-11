@@ -282,5 +282,91 @@ class ExtractorTests(unittest.TestCase):
             extract(Path("/tmp/whatever.xyz"))
 
 
+class CaptionTests(unittest.TestCase):
+    """Lecture recordings arrive as WebVTT/SubRip caption files."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _write(self, name, body):
+        path = self.dir / name
+        path.write_text(body, encoding="utf-8")
+        return path
+
+    VTT = """WEBVTT
+
+NOTE auto-generated
+
+1
+00:00:02.100 --> 00:00:06.400
+Today we continue with externalities
+
+2
+00:01:45.000 --> 00:01:51.200
+<v Instructor>The key condition is that property rights are well defined
+
+3
+00:01:51.200 --> 00:01:58.000
+and transaction costs are low enough for bargaining.
+
+4
+00:03:12.000 --> 00:03:19.500
+and transaction costs are low enough for bargaining.
+"""
+
+    SRT = """1
+00:00:01,000 --> 00:00:05,000
+Public goods are non-rival and non-excludable.
+
+2
+00:01:40,000 --> 00:01:47,500
+That gives us the Samuelson condition.
+"""
+
+    def test_parses_webvtt_into_timestamped_blocks(self):
+        blocks = extract(self._write("lec.vtt", self.VTT))
+        self.assertEqual([b.section for b in blocks], ["0:02", "1:45"])
+
+    def test_parses_subrip(self):
+        blocks = extract(self._write("lec.srt", self.SRT))
+        self.assertTrue(blocks)
+        self.assertIn("Samuelson", " ".join(b.text for b in blocks))
+
+    def test_cue_starting_a_window_is_not_absorbed_into_the_previous_one(self):
+        # The 1:45 block must begin with what was said at 1:45.
+        blocks = extract(self._write("lec.vtt", self.VTT))
+        second = next(b for b in blocks if b.section == "1:45")
+        self.assertTrue(second.text.startswith("The key condition"))
+
+    def test_strips_caption_markup_and_headers(self):
+        text = " ".join(b.text for b in extract(self._write("lec.vtt", self.VTT)))
+        self.assertNotIn("<v", text)
+        self.assertNotIn("WEBVTT", text)
+        self.assertNotIn("NOTE", text)
+
+    def test_drops_repeated_rolling_caption_lines(self):
+        text = " ".join(b.text for b in extract(self._write("lec.vtt", self.VTT)))
+        self.assertEqual(text.count("transaction costs are low enough"), 1)
+
+    def test_timestamp_label_survives_chunking(self):
+        sections = [c.section for c in chunk(extract(self._write("lec.vtt", self.VTT)))]
+        self.assertIn("0:02", sections)
+
+    def test_hours_appear_in_long_recordings(self):
+        body = "WEBVTT\n\n1\n01:05:00.000 --> 01:05:04.000\nAn hour into the lecture.\n"
+        self.assertEqual(extract(self._write("long.vtt", body))[0].section, "1:05:00")
+
+    def test_file_without_cues_is_rejected(self):
+        with self.assertRaises(ExtractionError):
+            extract(self._write("empty.vtt", "WEBVTT\n\njust prose, no cues\n"))
+
+    def test_transcripts_are_labelled_as_their_own_kind(self):
+        self.assertEqual(guess_kind("Lecture 3 recording", "", ".vtt"), "transcript")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -9,12 +9,14 @@ from __future__ import annotations
 import csv
 import html.parser
 import io
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
 from rag.normalize import clean
 
-SUPPORTED = {".pdf", ".pptx", ".docx", ".md", ".markdown", ".txt", ".html", ".htm", ".csv"}
+SUPPORTED = {".pdf", ".pptx", ".docx", ".md", ".markdown", ".txt", ".html", ".htm",
+             ".csv", ".vtt", ".srt"}
 
 
 class ExtractionError(RuntimeError):
@@ -28,6 +30,7 @@ class Block:
     text: str
     page: int          # 1-based page / slide number; 0 when the format has no pages
     label: str = ""    # "page" or "slide"
+    section: str = ""  # caller-supplied label; overrides the chunker's guess
 
 
 def _pdf(path: Path) -> list[Block]:
@@ -158,6 +161,87 @@ def _plain(path: Path) -> list[Block]:
     return [Block(text=text, page=0)]
 
 
+# WebVTT / SubRip cue header, e.g. "00:12:30.500 --> 00:12:34.000".
+_CUE = re.compile(
+    r"(?:(\d{1,2}):)?(\d{1,2}):(\d{2})[.,](\d{1,3})\s*-->\s*"
+    r"(?:(\d{1,2}):)?(\d{1,2}):(\d{2})[.,](\d{1,3})"
+)
+_CAPTION_NOISE = re.compile(r"^(WEBVTT|NOTE|STYLE|REGION)\b", re.I)
+_TAG = re.compile(r"</?[cuivb][^>]*>|<\d{2}:\d{2}:\d{2}[.,]\d{1,3}>")
+
+CAPTION_WINDOW_SECONDS = 90
+
+
+def _timestamp(seconds: int) -> str:
+    hours, rest = divmod(int(seconds), 3600)
+    minutes, secs = divmod(rest, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{secs:02d}"
+    return f"{minutes}:{secs:02d}"
+
+
+def _captions(path: Path) -> list[Block]:
+    """Parse .vtt/.srt into blocks labelled with the time they were spoken.
+
+    Cues are a line or two each, far too small to retrieve on their own, so
+    they are pooled into windows. The label is the window's start time, which
+    is what a student actually needs: somewhere to scrub to in the recording.
+    """
+    raw = path.read_text(encoding="utf-8-sig", errors="replace")
+
+    cues: list[tuple[int, str]] = []
+    start: int | None = None
+    spoken: list[str] = []
+
+    def flush() -> None:
+        if start is not None and spoken:
+            cues.append((start, " ".join(spoken)))
+
+    for line in raw.splitlines():
+        line = line.strip()
+        match = _CUE.search(line)
+        if match:
+            flush()
+            hours, minutes, secs = match.group(1) or 0, match.group(2), match.group(3)
+            start = int(hours) * 3600 + int(minutes) * 60 + int(secs)
+            spoken = []
+            continue
+        if not line or line.isdigit() or _CAPTION_NOISE.match(line):
+            continue
+        if start is not None:
+            spoken.append(_TAG.sub("", line))
+    flush()
+
+    if not cues:
+        raise ExtractionError(
+            f"No caption cues found in {path.name}. Expected WebVTT or SubRip format."
+        )
+
+    blocks: list[Block] = []
+    window_start = cues[0][0]
+    buffer: list[str] = []
+    previous = ""
+    for at, text in cues:
+        # Close the window before adding this cue, so a cue that starts a new
+        # window is the first line in it and the timestamp label stays honest.
+        if buffer and at - window_start >= CAPTION_WINDOW_SECONDS:
+            body = clean(" ".join(buffer))
+            if body:
+                blocks.append(Block(text=body, page=0, section=_timestamp(window_start)))
+            window_start, buffer = at, []
+        # Rolling captions repeat the previous line as they scroll; drop those.
+        if text and text != previous:
+            buffer.append(text)
+            previous = text
+    body = clean(" ".join(buffer))
+    if body:
+        blocks.append(Block(text=body, page=0, section=_timestamp(window_start)))
+
+    if not blocks:
+        raise ExtractionError(f"{path.name} contained no caption text.")
+    return blocks
+
+
 _HANDLERS = {
     ".pdf": _pdf,
     ".pptx": _pptx,
@@ -168,6 +252,8 @@ _HANDLERS = {
     ".html": _html,
     ".htm": _html,
     ".csv": _csv,
+    ".vtt": _captions,
+    ".srt": _captions,
 }
 
 

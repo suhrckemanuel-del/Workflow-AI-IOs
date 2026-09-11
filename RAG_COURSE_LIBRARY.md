@@ -30,6 +30,27 @@ python -m rag ask  "Why does a Pigouvian tax equal marginal external damage?"
 | `rag list` / `rag stats` | What is indexed. |
 | `rag remove <doc-key>` | Drop a document. |
 
+### Lecture recordings
+
+Panopto (and Zoom, Teams, Echo360) generate captions for every recording.
+Download the caption file and ingest it — the transcript becomes searchable
+alongside the slides:
+
+```bash
+python -m rag add ~/Downloads/Lecture_3.vtt --course "Applied Micro" --week 3
+python -m rag search "Coase theorem" --kind transcript
+```
+
+Citations for a transcript are **timestamps**, not page numbers — a hit reads
+`Lecture 3 recording — 12:30`, so you can scrub straight to that point in the
+video. Cues are pooled into 90-second windows, because a single caption line
+is too small to retrieve on its own; repeated rolling-caption lines are
+dropped, and speaker tags stripped.
+
+In Panopto: open the recording, then either the **Captions** tab in the left
+sidebar (select all, copy into a `.txt`) or **Settings → Downloads →
+Download captions** if your lecturer enabled it.
+
 Run any of them as `python -m rag <command>`.
 
 ### Modes for `ask`
@@ -44,15 +65,16 @@ python -m rag ask "what is MRS?"   --mode explain     # default
 ### Filters
 
 Every retrieval command takes `--course`, `--week`, and `--kind`
-(`lecture` / `exercises`), so you can revise one week at a time:
+(`lecture` / `exercises` / `transcript`), so you can revise one week at a time:
 
 ```bash
 python -m rag quiz "externalities" --week 2 --kind exercises
 python -m rag search "Coase" --week 2 --full
 ```
 
-Week and kind are inferred from filenames on ingest (`Lecture_2.pptx` → week 2;
-`exercises_week_2.pdf` → week 2, kind `exercises`). Override with flags.
+Week and kind are inferred on ingest (`Lecture_2.pptx` → week 2;
+`exercises_week_2.pdf` → week 2, kind `exercises`; any `.vtt`/`.srt` → kind
+`transcript`). Override with flags.
 
 ---
 
@@ -64,7 +86,8 @@ python -m rag add slides.pdf --week 4 --tags "midterm"
 python -m rag add notes.pdf --force              # re-index an edited file
 ```
 
-Supported: `.pdf`, `.pptx`, `.docx`, `.md`, `.txt`, `.html`, `.csv`.
+Supported: `.pdf`, `.pptx`, `.docx`, `.md`, `.txt`, `.html`, `.csv`,
+and `.vtt` / `.srt` (lecture recording captions).
 Scanned PDFs need OCR first — the extractor reports that rather than indexing
 an empty document. Ingest is keyed by filename, so re-adding a corrected file
 replaces the old version instead of duplicating it.
@@ -154,5 +177,6 @@ The routes mount under `/api` on the existing FastAPI app:
 python -m unittest tests.test_rag -v
 ```
 
-41 tests covering ligature repair, exercise-aware chunking, embedding
-behaviour, FTS query safety, re-ingest and deletion, and retrieval filters.
+50 tests covering ligature repair, exercise-aware chunking, caption parsing
+and timestamp labelling, embedding behaviour, FTS query safety, re-ingest and
+deletion, and retrieval filters.

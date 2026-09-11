@@ -119,17 +119,17 @@ def chunk(blocks: list[Block]) -> list[Chunk]:
             # Starting a fresh chunk: record where it begins and what it is about.
             if not buf:
                 page_start = page_end = unit.page
-                section = _heading_for(piece)
+                section = unit.section or _heading_for(piece)
 
             if buf and buf_len + len(piece) > TARGET_CHARS:
                 flush()
                 page_start = page_end = unit.page
-                section = _heading_for(piece)
+                section = unit.section or _heading_for(piece)
 
             # A later piece may carry the only usable label (an exercise number
             # merged in behind an untitled intro paragraph).
             if not section:
-                section = _heading_for(piece)
+                section = unit.section or _heading_for(piece)
 
             buf.append(piece)
             buf_len += len(piece)

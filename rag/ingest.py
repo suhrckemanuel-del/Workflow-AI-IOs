@@ -74,8 +74,10 @@ def guess_week(title: str) -> str:
     return match.group(1) if match else ""
 
 
-def guess_kind(title: str, text: str) -> str:
+def guess_kind(title: str, text: str, suffix: str = "") -> str:
     """Exercises and answer keys behave differently from lecture material."""
+    if suffix.lower() in {".vtt", ".srt"}:
+        return "transcript"
     if _EXERCISEY.search(title):
         return "exercises"
     head = text[:1500]
@@ -137,7 +139,7 @@ def ingest_file(
         doc_key=key,
         title=title,
         source_path=str(stored_path),
-        kind=kind or guess_kind(title, full_text),
+        kind=kind or guess_kind(title, full_text, path.suffix),
         course=course,
         week=week if week is not None else guess_week(title),
         tags=tags,
